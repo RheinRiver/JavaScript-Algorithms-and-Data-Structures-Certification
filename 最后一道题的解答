@@ -1,0 +1,127 @@
+var BIG = 100000000
+
+// 取整函数
+function toInt(num) {
+  return Math.round(num * BIG) / BIG;
+}
+
+function checkCashRegister(price, cash, cid) {
+  var change;
+  console.log("----------调试开始----------");
+  // 首先,我们先算出抽屉里的所有零钱个数
+  // money = [0.01, 0.05, 0.1, 0.25, 1, 5, 10, 20, 100];
+
+  let moneyPer = [0.01, 0.05, 0.1, 0.25, 1, 5, 10, 20, 100];
+
+  // 提取出各钱币的总额
+  let moneySum = [];
+  for (let i = 0; i < moneyPer.length; i++) {
+    moneySum.push(cid[i][1]);
+  }
+  console.log("各钱币的总额")
+  console.log(moneySum);
+  console.log();
+
+  // 抽屉的原值 oldDrawer = [];
+  let oldDrawer = [];
+  for (let i = 0; i < moneySum.length; i++) {
+    oldDrawer.push(toInt(moneySum[i] / moneyPer[i]))
+  }
+  console.log("各钱币的数量")
+  console.log(oldDrawer);
+  console.log();
+
+  // 然后我们找到用来找零的最大金额钱币 diff = cash - price
+  let oldDiff = cash - price;
+  let newDiff = oldDiff;
+  console.log("需要找零的总额:");
+  console.log(oldDiff);
+  console.log();
+  // 记录下位置 max ~ max+1
+  let max = 0;
+  for (let i = 0; i < oldDrawer.length; i++) {
+    if (oldDiff < moneyPer[i]) {
+      max = i-1;
+      break;
+    }
+  }
+  console.log("找零的最大金额:")
+  console.log(moneyPer[max]);
+  console.log();
+  
+  // 抽屉的当前值 newDrawer = [];
+  let newDrawer = [...oldDrawer];
+  console.log("抽屉的当前值:");
+  console.log(newDrawer);
+  console.log();
+
+  // 如果抽屉中有这个钱,那么就从抽屉拿走一个用来找零 newDrawer[i]--
+  // 如果没有,就尝试更低金额的钱币
+  // 当有这么多钱用来找零,将会得到 diff == 0
+  // 如果没有这么多钱用来找零, 那么 diff != 0
+  // 将找零的数据存放在 record 数组中
+  // 特殊地, 如果找到最后也没有找够, 那么 diff 一定大于零
+  for (let i = max; i >= 0; i--) {
+    while (newDrawer[i] > 0 && (newDiff - moneyPer[i]) >= 0) {
+      newDiff = toInt(newDiff - moneyPer[i]);
+      newDrawer[i]--;
+    }
+  }
+
+  console.log("找零后抽屉的当前值:");
+  console.log(newDrawer);
+  console.log("还需要找零的金额:");
+  console.log(newDiff);
+  console.log();
+
+
+  // 三种判断
+  // 要对第三种情况进行排序
+  // 对变动的金额进行记录 record = [];
+  // moneyName = ["PENNY", "NICKEL", "DIME", "QUARTER", "ONE", "FIVE", "TEN", "TWENTY", "ONE HUNDRED"];
+  let moneyName = ["PENNY", "NICKEL", "DIME", "QUARTER", "ONE", "FIVE", "TEN", "TWENTY", "ONE HUNDRED"];
+  let record = [];
+  let temp = [];
+  for (let i = 0; i < newDrawer.length; i++) {
+    if (newDrawer[i] != oldDrawer[i]) {
+      temp = [];
+      temp.push(moneyName[i]);
+      temp.push((oldDrawer[i] - newDrawer[i]) * moneyPer[i]);
+      record.push(temp);
+    }
+  }
+  console.log("各钱币变动的金额:");
+  console.log(record);
+  console.log();
+
+  // 数组排序 newRecord = [];
+  for (let i = 0; i < record.length - 1; i++) {
+    for (let j = i + 1; j < record.length; j++) {
+      if (record[i][1] < record[j][1]) {
+        temp = record[i];
+        record[i] = record[j];
+        record[j] = temp;
+      }
+    }
+  }
+  console.log("排序后的各金币变动的金额:");
+  console.log(record);
+
+  // 1. 如果 diff != 0 返回 {status: "INSUFFICIENT_FUNDS", change: []}
+  if (newDiff != 0) {
+    return {status: "INSUFFICIENT_FUNDS", change: []};
+  } else if (newDrawer.every(fuck => fuck == 0)) {
+  // 2. 如果抽屉里的钱刚好可以找零, 返回 {status: "CLOSED", change: cid}
+  // 需做一个判断, 如果 newDrawer 中的所有元素都为零, 则2成立
+    return {status: "CLOSED", change: cid};
+  } else {
+  // 3. 返回 {status: "OPEN", change: [从高到底, 只出现改变的金额]}
+    return {status: "OPEN", change: record};
+  }
+  console.log("----------调试结束----------");
+  console.log();
+
+  return change;
+}
+
+checkCashRegister(19.5, 20, [["PENNY", 1.01], ["NICKEL", 2.05], ["DIME", 3.1], ["QUARTER", 4.25], ["ONE", 90], ["FIVE", 55], ["TEN", 20], ["TWENTY", 60], ["ONE HUNDRED", 100]]);
